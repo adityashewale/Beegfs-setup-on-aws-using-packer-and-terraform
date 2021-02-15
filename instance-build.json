@@ -1,0 +1,51 @@
+{
+  "variables": {
+    "access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `access_key`}}",
+    "secret_key": "{{user `secret_key`}}",
+    "region": "us-east-1",
+    "source_ami": "ami-d5bf2caa",
+    "instance_type": "t2.micro",
+    "ssh_username": "centos",
+    "ami_name": "beegfs-install-{{timestamp}}",
+
+    "launch_block_device_mappings": [
+    {
+      "device_name": "/dev/sdc",
+      "volume_size": 10,
+      "delete_on_termination": true
+    },
+
+    {
+      "device_name": "/dev/sdd",
+      "volume_size": 10,
+      "delete_on_termination": true
+    },
+
+    {
+	    "device_name": "/dev/sde",
+	     "volume_size": 10,
+	     "delete_on_termination": true
+    }
+
+
+
+  ],
+  "tags": {
+      "OS_Version": "Centos 7 with beegfs setup",
+      "ToBeDeleted": "True"
+    }
+  }],
+
+  "provisioners": [
+  {
+    "type": "shell",
+    "script": "provision.sh"
+  }]
+}
+
+
