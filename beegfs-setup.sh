@@ -115,19 +115,23 @@ sudo mkdir /storage2
 
 
 sudo mkfs.ext4 /dev/xvdc 
-sudo mkfs.ext4 /dev/xvdd 
-sudo mkfs.ext4 /dev/xvde
+sudo mkfs.xfs /dev/xvdd 
+sudo mkfs.xfs /dev/xvde
+
+
 
 
 sudo mount /dev/xvdc /meta-data
 sudo mount /dev/xvdd /storage1
 sudo mount /dev/xvde /storage2
 
-sudo echo "/dev/xvdc /meta-data                       ext4    defaults        1 1" >> /etc/fstab
+sudo setfacl -m u:centos:rw /etc/fstab 
 
-sudo echo "/dev/xvdd /storage1                       ext4    defaults        1 1" >> /etc/fstab
+sudo echo "/dev/xvdc /meta-data                       ext4    defaults        0 0" >> /etc/fstab
 
-sudo echo "/dev/xvde /storage2                      ext4    defaults        1 1" >> /etc/fstab
+sudo echo "/dev/xvdd /storage1                       ext4    defaults        0 0" >> /etc/fstab
+
+sudo echo "/dev/xvde /storage2                      ext4    defaults        0 0" >> /etc/fstab
 
 sudo mkdir -p /mgmt/beegfs/beegfs_mgmtd
 sudo mkdir -p /meta-data/beegfs/beegfs_meta
