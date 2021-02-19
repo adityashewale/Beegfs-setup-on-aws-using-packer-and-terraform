@@ -106,6 +106,7 @@ sudo yum install -y kernel-headers-3.10.0-862.2.3.el7.x86_64.rpm
 
 sudo yum -y install wget  beegfs-mgmtd  beegfs-meta  beegfs-storage beegfs-client beegfs-helperd beegfs-utils
 
+sudo setfacl -m u:centos:rw /etc/fstab ##############Adding Permission to centos user to modify /etc/fstab file ####################
 
 
 
@@ -125,7 +126,6 @@ sudo mount /dev/xvdc /meta-data
 sudo mount /dev/xvdd /storage1
 sudo mount /dev/xvde /storage2
 
-sudo setfacl -m u:centos:rw /etc/fstab 
 
 sudo echo "/dev/xvdc /meta-data                       ext4    defaults        0 0" >> /etc/fstab
 
