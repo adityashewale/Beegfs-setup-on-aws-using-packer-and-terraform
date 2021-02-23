@@ -104,23 +104,25 @@ ls -lrth
 
 sudo yum install -y kernel-headers-3.10.0-862.2.3.el7.x86_64.rpm
 
-sudo yum -y install wget  beegfs-mgmtd  beegfs-meta  beegfs-storage beegfs-client beegfs-helperd beegfs-utils
+sudo yum -y install wget  beegfs-mgmtd  beegfs-meta  beegfs-storage beegfs-client beegfs-helperd beegfs-utils dbench 
 
-sudo setfacl -m u:centos:rw /etc/fstab ##############Adding Permission to centos user to modify /etc/fstab file ####################
+##############Adding Permission to centos user to modify /etc/fstab file ####################
 
+sudo setfacl -m u:centos:rw /etc/fstab 
 
+################Creating Directory to mount raw storage ##################
 
 sudo mkdir /meta-data
 sudo mkdir /storage1
 sudo mkdir /storage2
 
-
+################# Applying  file system on raw storage ############
 sudo mkfs.ext4 /dev/xvdc 
 sudo mkfs.xfs /dev/xvdd 
 sudo mkfs.xfs /dev/xvde
 
 
-
+############## Mounting the raw storage on crated directory ##########
 
 sudo mount /dev/xvdc /meta-data
 sudo mount /dev/xvdd /storage1
