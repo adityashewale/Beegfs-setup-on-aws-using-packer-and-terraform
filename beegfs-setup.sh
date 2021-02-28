@@ -1,36 +1,17 @@
 #!/usr/bin/env bash
 
 
-# Setup sudo to allow no-password sudo for "hashicorp" group and adding "terraform" user
-sudo groupadd -r hashicorp
-sudo useradd -m -s /bin/bash terraform
-sudo usermod -a -G hashicorp terraform
-sudo cp /etc/sudoers /etc/sudoers.orig
-echo "terraform ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/terraform
 
 # Installing SSH key
 
-sudo mkdir -p /home/terraform/.ssh
-sudo chmod 700 /home/terraform/.ssh
-sudo cp /tmp/tf-packer.pub /home/terraform/.ssh/authorized_keys
-sudo chmod 600 /home/terraform/.ssh/authorized_keys
-sudo chown -R terraform /home/terraform/.ssh
-sudo usermod --shell /bin/bash terraform
-
-
-#sudo -H -i -u terraform -- env bash << EOF
-
-
-
-
-
-
-
-
-
-
-
-
+sudo mkdir -p /home/centos/.ssh
+sudo chmod 700 /home/centos/.ssh
+sudo cp /tmp/tf-packer.pub /home/centos/.ssh/authorized_keys
+sudo chmod 600 /home/centos/.ssh/authorized_keys
+sudo chown -R centos /home/centos/.ssh
+sudo usermod --shell /bin/bash centos
+sudo cp /etc/sudoers /etc/sudoers.orig
+sudo echo "centos ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/centos
 
 
 sudo getenforce
@@ -38,16 +19,13 @@ sudo getenforce
 sudo    sed -i 's/SELINUX=enforcing/SELINUX=disabled/g'  /etc/selinux/config
 
 sudo cat /etc/selinux/config
-#sudo init 6
-#sudo setenforce 0 
 sudo setenforce 0
 sudo sestatus 
 sudo getenforce
 sudo cat /etc/selinux/config
-#sudo systemctl stop firewalld 
 
 #hostn=`hostname` 
-
+sudo hostnamectl set-hostname beegfs
 
 
 #echo "beegfs-server-client" > /etc/hostname
@@ -58,7 +36,7 @@ lsblk
 
 df -h 
 
-sudo hostname > hostnameis
+#sudo hostname > hostnameis
 
 #####creating repo file and copy into /etc/yum.repos##########
 
@@ -104,36 +82,48 @@ ls -lrth
 
 sudo yum install -y kernel-headers-3.10.0-862.2.3.el7.x86_64.rpm
 
-sudo yum -y install wget  beegfs-mgmtd  beegfs-meta  beegfs-storage beegfs-client beegfs-helperd beegfs-utils dbench 
 
-##############Adding Permission to centos user to modify /etc/fstab file ####################
+##################### Installing reuired beegfs packges and dbench #######################################
+sudo yum -y install wget  beegfs-mgmtd  beegfs-meta  beegfs-storage beegfs-client beegfs-helperd beegfs-utils dbench
 
-sudo setfacl -m u:centos:rw /etc/fstab 
+############################Creating directory to mount storage#########################
 
-################Creating Directory to mount raw storage ##################
 
 sudo mkdir /meta-data
 sudo mkdir /storage1
 sudo mkdir /storage2
 
-################# Applying  file system on raw storage ############
+######################## Formating raw storage ################################
 sudo mkfs.ext4 /dev/xvdc 
 sudo mkfs.xfs /dev/xvdd 
 sudo mkfs.xfs /dev/xvde
 
-
-############## Mounting the raw storage on crated directory ##########
-
+########################### Mounting raw storage ###############################################
 sudo mount /dev/xvdc /meta-data
 sudo mount /dev/xvdd /storage1
 sudo mount /dev/xvde /storage2
 
+sudo setfacl -m u:centos:rw /etc/rc.local
 
-sudo echo "/dev/xvdc /meta-data                       ext4    defaults        0 0" >> /etc/fstab
+sleep 5 
 
-sudo echo "/dev/xvdd /storage1                       ext4    defaults        0 0" >> /etc/fstab
+sudo chmod +x /etc/rc.local
+sudo systemctl enable rc-local
+sudo echo "mount /dev/xvdc /meta-data" >> /etc/rc.local
 
-sudo echo "/dev/xvde /storage2                      ext4    defaults        0 0" >> /etc/fstab
+sudo echo "mount /dev/xvdd /storage1" >> /etc/rc.local
+
+sudo echo "mount /dev/xvde /storage2" >> /etc/rc.local
+
+#sudo echo "sleep 10" >> /etc/rc.local
+#sudo echo "/usr/bin/hostname `hostname`" >> /etc/rc.local
+#sudo echo "hostname" > /etc/hostname 
+sudo echo "sleep 30 " >> /etc/rc.local
+sudo echo "hostnamectl set-hostname beegfs" >> /etc/rc.local
+
+
+
+############################### Creating directory for beegfs###############################
 
 sudo mkdir -p /mgmt/beegfs/beegfs_mgmtd
 sudo mkdir -p /meta-data/beegfs/beegfs_meta
@@ -141,15 +131,12 @@ sudo mkdir -p /storage1/beegfs_storage1
 sudo mkdir -p /storage2/beegfs_storage2
 
 
-
-df -h
-
-sudo /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/beegfs/beegfs_mgmtd
-sudo /opt/beegfs/sbin/beegfs-setup-meta -p /meta-data/beegfs/beegfs_meta -s 2 -m localhost
-sudo /opt/beegfs/sbin/beegfs-setup-storage -p /storage1/beegfs_storage -s 3 -i 201 -m localhost
+sudo /opt/beegfs/sbin/beegfs-setup-mgmtd -p /data/beegfs/beegfs_mgmtd beegfs
+sudo /opt/beegfs/sbin/beegfs-setup-meta -p /meta-data/beegfs/beegfs_meta -s 2 -m beegfs
+sudo /opt/beegfs/sbin/beegfs-setup-storage -p /storage1/beegfs_storage -s 3 -i 201 -m beegfs
 sudo /opt/beegfs/sbin/beegfs-setup-storage -p /storage2/beegfs_storage -s 3 -i 202 
 
-sudo /opt/beegfs/sbin/beegfs-setup-client -m localhost
+sudo /opt/beegfs/sbin/beegfs-setup-client -m beegfs
 
 sudo systemctl start beegfs-mgmtd
 sudo systemctl status beegfs-mgmtd
@@ -168,16 +155,34 @@ sudo systemctl start beegfs-client
 
 sudo systemctl status  beegfs-client
 
-sudo systemctl enable beegfs-mgmtd beegfs-meta beegfs-storage beegfs-helperd  beegfs-client
+df -TH
+
+sudo echo "systemctl start beegfs-mgmtd beegfs-meta beegfs-storage beegfs-helperd  beegfs-client" >> /etc/rc.local
 
 
-df -h
+sudo df -h
 
 lsblk 
 
-echo "done"
+sudo wget http://www.iozone.org/src/current/iozone3_394.tar 
 
-sudo getent  passwd | grep terraform
+sudo mv iozone3_394.tar /mnt/beegfs 
+
+#sudo tar -xvf /mnt/beegfs/iozone3_394.tar
+
+#sudo cd /mnt/beegfs/iozone3_394/src/current/
+#sudo make ; make linux 
+
+sudo yum install epel-release -y 
+sudo yum install dbench -y 
+
+
+
+
+
+
+
+
 
 
 
