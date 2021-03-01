@@ -43,9 +43,21 @@
 
   "provisioners": [
   {
+
+
+     "type": "file",
+     "source": "tf-packer.pub",
+     "destination": "/tmp/tf-packer.pub"
+},
+  
+  
+  {
     "type": "shell",
     "script": "provision.sh"
-  }]
-}
 
+
+  }
+  
+ ]
+}
 
